@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "package": "exloran.bright.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [],
+  "client": [
+    "HitboxMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
