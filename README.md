@@ -1,6 +1,6 @@
 # Bright
 
-Bright, Minecraft 1.20.1 Fabric icin hazirlanmis hafif bir istemci modudur.
+Bright, Minecraft 1.21 Fabric icin hazirlanmis hafif bir istemci modudur.
 Sadece 3 modul icerir, hepsinin kendi ayar paneli vardir:
 
 - **Hitbox** — hedef varliklarin carpisma boyutunu XZ/Y eksenlerinde buyutur.
@@ -27,7 +27,7 @@ otomatik olarak kaydedilir.
 
 Cikti `build/libs/bright-1.0.0.jar` altinda olusur.
 
-> Not: Bu proje 1.21.x hedefli onceki bir surumden 1.20.1'e tasindi
+> Not: Bu surum yalnizca Minecraft 1.21 (Fabric, Java 21) icindir.
 > (Yarn/Fabric API surumleri ve bazi render cagrilari degisti — ozellikle
 > `RenderSystem.setShader` ve `Tessellator` kullanimlari). Bu ortamda
 > internet erisimi olmadigi icin Minecraft/Yarn kutuphaneleri indirilip

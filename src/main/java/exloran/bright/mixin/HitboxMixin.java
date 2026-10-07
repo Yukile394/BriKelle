@@ -3,9 +3,7 @@ package exloran.bright.mixin;
 import exloran.bright.Bright;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityPose;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.EntityDimensions;
 import net.minecraft.util.math.Box;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -46,9 +44,8 @@ public abstract class HitboxMixin {
         Box orig = cir.getReturnValue();
 
         // Poza bagli olmayan referans boyut: ayakta durma boyutu
-        EntityDimensions standing = living.getDimensions(EntityPose.STANDING);
-        double baseW = Math.max(orig.maxX - orig.minX, standing.width);
-        double baseH = Math.max(orig.maxY - orig.minY, standing.height);
+        double baseW = Math.max(orig.maxX - orig.minX, living.getType().getWidth());
+        double baseH = Math.max(orig.maxY - orig.minY, living.getType().getHeight());
 
         // Ucus/yatay pozlarda kutu ayakta durma boyutundan kucuk olabilir; buyutmeyi
         // her zaman en az ayakta boyuta gore yap.

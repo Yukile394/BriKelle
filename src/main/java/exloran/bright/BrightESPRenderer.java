@@ -4,9 +4,12 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.render.BufferRenderer;
+import net.minecraft.client.render.GameRenderer;
+import net.minecraft.client.render.Tessellator;
+import net.minecraft.client.render.VertexFormat;
+import net.minecraft.client.render.VertexFormats;
 import net.minecraft.client.render.WorldRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
@@ -16,22 +19,9 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 
 /**
- * BrightESPRenderer — ESP acikken canli varliklarin etrafina tel kafes kutu cizer.
- *
- * Neden eski surum calismiyordu (1.20.1):
- *  - WorldRenderEvents.LAST icinde el ile Tessellator + POSITION_COLOR + LINES
- *    kullaniliyordu. 1.20.1'de LINES cizimi normal vektoru ve lines shader'i
- *    ister; POSITION_COLOR ile cizgiler ekranda hic gorunmez.
- *  - LAST olayi sis/derinlik durumu sifirlandiktan sonra calistigi icin
- *    matris ve kamera donusumu guvenilir degildi.
- *
- * Simdiki yaklasim:
- *  - Vanilla'nin kendi WorldRenderer.drawBox(...) metodu ve RenderLayer.getLines()
- *    kullanilir; format/normal/shader islerini oyun kendisi yapar.
- *  - Cizim AFTER_TRANSLUCENT asamasinda yapilir, kendi VertexConsumerProvider
- *    ile hemen flush edilir.
- *  - "Duvar Icinden Gor" acikken derinlik testi kapatilir.
- *  - Kutu tick interpolasyonu ile cizilir, hareket eden hedefte titremez.
+ * BrightESPRenderer (1.21) — canli varliklarin etrafina tel kafes kutu cizer.
+ * Kendi Tessellator'u + vanilla lines shader'i kullanir; boylece "Duvar Icinden Gor"
+ * (derinlik testi kapali) ve cizgi kalinligi gercekten calisir.
  */
 public class BrightESPRenderer {
 
@@ -56,28 +46,28 @@ public class BrightESPRenderer {
         float lw = Bright.config.espLineWidth;
         boolean walls = Bright.config.espThroughWalls;
 
-        VertexConsumerProvider.Immediate provider = mc.getBufferBuilders().getEntityVertexConsumers();
-        VertexConsumer lines = provider.getBuffer(RenderLayer.getLines());
-
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
+        RenderSystem.setShader(GameRenderer::getRenderTypeLinesProgram);
         RenderSystem.lineWidth(lw);
         if (walls) RenderSystem.disableDepthTest();
+
+        BufferBuilder buf = Tessellator.getInstance().begin(VertexFormat.DrawMode.LINES, VertexFormats.LINES);
+        boolean any = false;
 
         for (Entity e : mc.world.getEntities()) {
             if (!(e instanceof LivingEntity le) || le == mc.player || !le.isAlive()) continue;
 
-            // Interpolasyonlu konum farki
             double dx = MathHelper.lerp(tickDelta, le.lastRenderX, le.getX()) - le.getX();
             double dy = MathHelper.lerp(tickDelta, le.lastRenderY, le.getY()) - le.getY();
             double dz = MathHelper.lerp(tickDelta, le.lastRenderZ, le.getZ()) - le.getZ();
 
             Box box = le.getBoundingBox().offset(dx - cam.x, dy - cam.y, dz - cam.z);
-            WorldRenderer.drawBox(ms, lines, box, r, g, b, 0.95f);
+            WorldRenderer.drawBox(ms, buf, box, r, g, b, 0.95f);
+            any = true;
         }
 
-        // Cizgileri hemen flush et; derinlik testi durumu bu noktada gecerli
-        provider.draw(RenderLayer.getLines());
+        if (any) BufferRenderer.drawWithGlobalProgram(buf.end());
 
         RenderSystem.enableDepthTest();
         RenderSystem.lineWidth(1.0f);

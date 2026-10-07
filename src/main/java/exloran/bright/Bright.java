@@ -9,6 +9,7 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.render.*;
+import net.minecraft.component.DataComponentTypes;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.LivingEntity;
@@ -22,7 +23,7 @@ import org.joml.Matrix4f;
 import org.lwjgl.glfw.GLFW;
 
 /**
- * Bright — Minecraft 1.20.1 Fabric istemci modu.
+ * Bright — Minecraft 1.21 Fabric istemci modu.
  * Sadece 3 modul: Hitbox, TriggerBot, ESP.
  * Ayar ekrani sadece tusla acilir (varsayilan Sag Shift; Kontroller > Bright).
  * Mod, ModMenu listesinde varsayilan olarak gizlidir (library rozeti).
@@ -84,13 +85,13 @@ public class Bright implements ClientModInitializer {
         if (e == null || !e.isUsingItem()) return false;
         ItemStack u = e.getActiveItem();
         if (u.isEmpty()) return false;
-        return u.getItem().isFood()
+        return u.contains(DataComponentTypes.FOOD)
                 || u.getItem() == Items.MILK_BUCKET || u.getItem() == Items.POTION
                 || u.getItem() == Items.SPLASH_POTION || u.getItem() == Items.LINGERING_POTION;
     }
 
     // ══════════════════════════════════════════════════════════
-    //  Yuvarlak kose ciziminde kullanilan yardimcilar (1.20.1 API)
+    //  Yuvarlak kose ciziminde kullanilan yardimcilar (1.21 API)
     // ══════════════════════════════════════════════════════════
     public static void fillRound(MatrixStack ms, float x, float y, float w, float h, float r, int color) {
         float a = ((color >> 24) & 0xFF) / 255f, rv = ((color >> 16) & 0xFF) / 255f,
@@ -102,17 +103,16 @@ public class Bright implements ClientModInitializer {
         RenderSystem.setShader(GameRenderer::getPositionColorProgram);
         Matrix4f m4 = ms.peek().getPositionMatrix();
         Tessellator tess = Tessellator.getInstance();
-        BufferBuilder buf = tess.getBuffer();
-        buf.begin(VertexFormat.DrawMode.TRIANGLE_FAN, VertexFormats.POSITION_COLOR);
-        buf.vertex(m4, x + w / 2f, y + h / 2f, 0).color(rv, gv, b, a).next();
+        BufferBuilder buf = tess.begin(VertexFormat.DrawMode.TRIANGLE_FAN, VertexFormats.POSITION_COLOR);
+        buf.vertex(m4, x + w / 2f, y + h / 2f, 0).color(rv, gv, b, a);
         float[] cx = {x + w - r, x + r, x + r, x + w - r}, cy = {y + r, y + r, y + h - r, y + h - r}, sa = {270f, 180f, 90f, 0f};
         for (int i = 0; i < 4; i++) for (int j = 0; j <= 12; j++) {
             double ang = Math.toRadians(sa[i] + j * 7.5);
-            buf.vertex(m4, (float) (cx[i] + Math.cos(ang) * r), (float) (cy[i] + Math.sin(ang) * r), 0).color(rv, gv, b, a).next();
+            buf.vertex(m4, (float) (cx[i] + Math.cos(ang) * r), (float) (cy[i] + Math.sin(ang) * r), 0).color(rv, gv, b, a);
         }
         double ca = Math.toRadians(sa[0]);
-        buf.vertex(m4, (float) (cx[0] + Math.cos(ca) * r), (float) (cy[0] + Math.sin(ca) * r), 0).color(rv, gv, b, a).next();
-        tess.draw();
+        buf.vertex(m4, (float) (cx[0] + Math.cos(ca) * r), (float) (cy[0] + Math.sin(ca) * r), 0).color(rv, gv, b, a);
+        BufferRenderer.drawWithGlobalProgram(buf.end());
         RenderSystem.disableBlend();
     }
 
@@ -127,16 +127,15 @@ public class Bright implements ClientModInitializer {
         RenderSystem.lineWidth(1.3f);
         Matrix4f m4 = ms.peek().getPositionMatrix();
         Tessellator tess = Tessellator.getInstance();
-        BufferBuilder buf = tess.getBuffer();
-        buf.begin(VertexFormat.DrawMode.DEBUG_LINE_STRIP, VertexFormats.POSITION_COLOR);
+        BufferBuilder buf = tess.begin(VertexFormat.DrawMode.DEBUG_LINE_STRIP, VertexFormats.POSITION_COLOR);
         float[] cx = {x + w - r, x + r, x + r, x + w - r}, cy = {y + r, y + r, y + h - r, y + h - r}, sa = {270f, 180f, 90f, 0f};
         for (int i = 0; i < 4; i++) for (int j = 0; j <= 12; j++) {
             double ang = Math.toRadians(sa[i] + j * 7.5);
-            buf.vertex(m4, (float) (cx[i] + Math.cos(ang) * r), (float) (cy[i] + Math.sin(ang) * r), 0).color(rv, gv, b, a).next();
+            buf.vertex(m4, (float) (cx[i] + Math.cos(ang) * r), (float) (cy[i] + Math.sin(ang) * r), 0).color(rv, gv, b, a);
         }
         double ca = Math.toRadians(sa[0]);
-        buf.vertex(m4, (float) (cx[0] + Math.cos(ca) * r), (float) (cy[0] + Math.sin(ca) * r), 0).color(rv, gv, b, a).next();
-        tess.draw();
+        buf.vertex(m4, (float) (cx[0] + Math.cos(ca) * r), (float) (cy[0] + Math.sin(ca) * r), 0).color(rv, gv, b, a);
+        BufferRenderer.drawWithGlobalProgram(buf.end());
         RenderSystem.disableBlend();
     }
 
@@ -159,6 +158,10 @@ public class Bright implements ClientModInitializer {
 
         public BrightMenu() { super(Text.literal("Bright")); }
         @Override public boolean shouldPause() { return false; }
+
+        // 1.21: Screen.render arka plani bulaniklastirir ve panelin ustune cizer; kapatildi.
+        @Override
+        public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) { }
 
         @Override
         protected void init() {

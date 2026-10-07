@@ -1,11 +1,14 @@
 plugins {
-    id 'fabric-loom' version '1.6-SNAPSHOT'
+    id 'fabric-loom' version '1.7-SNAPSHOT'
     id 'maven-publish'
 }
 
 version = project.mod_version
 group = project.maven_group
-archivesBaseName = project.archives_base_name
+
+base {
+    archivesName = project.archives_base_name
+}
 
 repositories {
     mavenCentral()
@@ -22,15 +25,15 @@ dependencies {
 }
 
 tasks.withType(JavaCompile).configureEach {
-    options.release = 17
+    options.release = 21
 }
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
+        languageVersion = JavaLanguageVersion.of(21)
     }
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }
 
 processResources {
